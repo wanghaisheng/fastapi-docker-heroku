@@ -9,7 +9,7 @@ app = FastAPI()
 @app.get("/{url}")
 async def root(url:str):
     # Create a generator instance where:
-
+    print('domain is',url)
     generator = Generator(site=url,
                         output="sitemap.xml", disguise="http://www.example.com")
     # site = The site to generate a sitemap of. (required)
@@ -34,6 +34,7 @@ async def root(url:str):
 
 @app.get("/sitemap/{url}")
 async def crawl(url:str):
+    print('domain is',url)
 
     web_crawler = WebCrawler(url)
     return {"urls":web_crawler.crawl_it()}
