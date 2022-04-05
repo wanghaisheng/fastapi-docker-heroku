@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from webcrawler import WebCrawler
+from app.webcrawler import WebCrawler
 from sitemapgen import Generator          # Import the Generator class
 
 
