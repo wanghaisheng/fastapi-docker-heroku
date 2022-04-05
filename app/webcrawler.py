@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import ssl
 import urllib
-from parsers import AnchorHTMLParser, URLParser
-from sitemap import SiteMapXML
+from .parsers import AnchorHTMLParser, URLParser
+from .sitemap import SiteMapXML
 
 
 class WebCrawler(object):
