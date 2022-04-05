@@ -6,7 +6,7 @@ from sitemapgen import Generator          # Import the Generator class
 app = FastAPI()
 
 
-@app.get("/{url}")
+@app.get("/sitemap/")
 async def root(url:str):
     # Create a generator instance where:
     print('domain is',url)
@@ -32,7 +32,7 @@ async def root(url:str):
     return {"urls": urls}
 
 
-@app.get("/sitemap/{url}")
+@app.get("/sitemap2/")
 async def crawl(url:str):
     print('domain is',url)
 
