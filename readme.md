@@ -9,6 +9,12 @@
 [Git](https://git-scm.com/) (or just download the repo)  
 [Heroku cli](https://devcenter.heroku.com/articles/heroku-cli) (to run the heroku commands)
 
+
+
+
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/wanghaisheng/fastapi-docker-heroku/tree/master)
+
 ## Instructions
 
 Note: Replace `your-app-name` in the instructions with the name you wish to have on your app.
