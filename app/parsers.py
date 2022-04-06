@@ -1,12 +1,12 @@
 
-import urllib.parse
+from urllib.parse import urlparse
 from html.parser import HTMLParser
 
 class URLParser(object):
 
     def __init__(self, url):
         self.url = url
-        self.parsed_url = urllib.parse(self.url)
+        self.parsed_url = urlparse(self.url)
 
     def get_domain(self):
         """

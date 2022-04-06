@@ -1,40 +1,28 @@
 from fastapi import FastAPI
-from app.webcrawler import WebCrawler
-from sitemapgen import Generator          # Import the Generator class
-
-
+import requests
+from app.fws import *
+from fastapi.responses import ORJSONResponse
 app = FastAPI()
+def trueurl(url):
 
+    r = requests.head(url, allow_redirects=True)
+    return r.url
+@app.get("/sitemap/", response_class=ORJSONResponse)
+async def sitemap(url:str):
+    print('check url',url)
+    # if not isvaliddomain(url):
+    #     return {"urls": 'not a valid domain'}
+    if url.startswith("http://"):
+        pass
+    elif url.startswith("https://"):
+        pass
+    else:
+        url='https://'+url
+    url =trueurl(url)
 
-@app.get("/sitemap/")
-async def root(url:str):
-    # Create a generator instance where:
-    print('domain is',url)
-    generator = Generator(site=url,
-                        output="sitemap.xml", disguise="http://www.example.com")
-    # site = The site to generate a sitemap of. (required)
-    # output = The path of the output file. (required) If the sitemap is not be written to a file, just set it to an empty string.
-    # disguise = The url to disguise the sitemap for. (optional)
+    urls= crawler(url,'report.txt',1)
 
-    # Discover all URLs possible from the "site" specified during initialization.
-    urls = generator.discover()
-    # This function returns the URLs discovered but it's return value can also be ignored if the urls don't matter
-    # (If they are ultimately going to be written to a file)
-    # Returns a list
+    print(urls)
 
-    # Generate a String sitemap from the URLs discovered before. Should only be used after calling generator.discover()
-    sitemap = generator.genSitemap()
-    # This function returns the generated sitemap but it's return value can also be ignored if the sitemap is just to be written to a file.
-    # Returns a String
-
-    generator.write()      # Write to the output file specified. No return value
-
+    # return {"urls": urls}
     return {"urls": urls}
-
-
-@app.get("/sitemap2/")
-async def crawl(url:str):
-    print('domain is',url)
-
-    web_crawler = WebCrawler(url)
-    return {"urls":web_crawler.crawl_it()}

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+from re import UNICODE
 import ssl
-import urllib
 from .parsers import AnchorHTMLParser, URLParser
 from .sitemap import SiteMapXML
-
+import requests
+from bs4 import BeautifulSoup
 
 class WebCrawler(object):
     """
@@ -30,6 +31,7 @@ class WebCrawler(object):
         Verify valid URL
         """
         parsed_url = URLParser(self.url)
+        print('parsed url',parsed_url)
         test_request, error = self.test_http_get_request(self.url)
         if not parsed_url.get_domain() or not test_request:
             print (error)
@@ -65,12 +67,19 @@ class WebCrawler(object):
             for url in gen:
                 # get response from url
                 response, lastmod = self.get(url)
+                print('----111111----------',response)
                 # set url info
                 self.set(url, response, lastmod)
+                print('----2222----------')
+
                 # get all links inside the response
                 links_from_response = self.get_links_from_response(response)
+                print('----3333----------',links_from_response)
+
                 # put new_urls_set and links_from_response together
                 new_urls_set = new_urls_set.union(links_from_response)
+                print('----4444----------',new_urls_set)
+
             # recursion call (making sure max_depth gets decremented)
             self.perform_crawling(new_urls_set, max_depth-1)
         return new_urls_set
@@ -79,21 +88,36 @@ class WebCrawler(object):
         Extract links from the response using a parser
         https://docs.python.org/2/library/htmlparser.html#HTMLParser.HTMLParser.feed
         """
-        anchor_parser = AnchorHTMLParser()
-        anchor_parser.feed(response)
         links = set()
-        for link in anchor_parser.get_links():
-            is_valid = self.is_this_link_valid(link)
+
+        soup = BeautifulSoup(response, "html.parser")
+
+        #Does something with page
+        
+        print('count link',soup.find_all('a', href=True))
+        for link in soup.find_all('a', href=True):
+
+            is_valid = self.is_this_link_valid(link['href'])
+            print('isvalid',link['href'])
             if is_valid:
                 links.add(link)
-        return links
+        return links            
+
+        # anchor_parser = AnchorHTMLParser()
+        # anchor_parser.feed(response)
+        # links = set()
+        # for link in anchor_parser.handle_starttag():
+        #     is_valid = self.is_this_link_valid(link)
+        #     if is_valid:
+        #         links.add(link)
+        # return links
 
     def is_this_link_valid(self, link):
-        if not isinstance(link, (str, unicode)):
+        if not isinstance(link, (str, UNICODE)):
             return False
         if link.startswith('/') or link.startswith(self.domain) or link.startswith('http' + self.domain):
             return True
-        return False
+        # return False
 
     def set(self, current_url, response, lastmod):
         """
@@ -120,13 +144,19 @@ class WebCrawler(object):
                 complete_url = "%s://%s%s" % (self.prefix, self.domain, url)
             else:
                 complete_url = url
+            print('complete url',complete_url)
             # This packages the request (it doesn't make it)
-            request = urllib.Request(complete_url)
+            response = requests.get(complete_url)
             # Sends the request and catches the response
-            response = urllib.urlopen(request)
-            response_raw = response.read().decode('utf-8', 'ignore')
-            lastmod = response.headers.dict.get('last-modified') or response.headers.dict.get('date')
-        except (urllib.HTTPError, urllib.URLError, ssl.CertificateError, ValueError):
+            # response = urllib.urlopen(request)
+            # print(response.content)
+            response_raw = response.content
+            try:
+                lastmod = response.headers['last-modified'] or response.headers['date']
+            except:
+                lastmod=None
+            print(lastmod)
+        except:
             print('Something went wrong for this URL: [%s]' % (url))
             response_raw = str()
             lastmod = None
@@ -139,9 +169,9 @@ class WebCrawler(object):
         """
         try:
             # This packages the request (it doesn't make it)
-            request = urllib.Request(url)
+            print('test url connection',url)
+            response = requests.head(url)
             # Sends the request and catches the response
-            response = urllib.urlopen(request)
         except Exception as e:
             return (False, e)
         return (True, None)
