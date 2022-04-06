@@ -106,7 +106,7 @@ def index() -> None:
     # put_text('bot is busy crawling now')
     put_loading(shape='border', color='success').style('width:4rem; height:4rem')
     clear('introduction')
-    urls= crawler(url,'report.txt',1)
+    urls= crawler(url,1)
     data=[]
     for i in len(urls):
         item =[].append(i,urls[i],url)

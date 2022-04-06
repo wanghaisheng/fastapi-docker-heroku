@@ -15,7 +15,10 @@ import os
 import subprocess
 import argparse
 
-def crawler(domain, ofile, mute):
+def crawler(domain, mute):
+    domain =urlparse(url).netloc
+
+    ofile=domain+'.txt'
     try:
         # a queue of urls to be crawled
         new_urls = deque([domain])
