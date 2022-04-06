@@ -40,7 +40,9 @@ async def sitemap(url:str):
     return {"urls": urls}
 
 
-
+return_home="""
+location.href='/'
+"""
 @config(theme="minty",title=SEO_TITLE, description=SEO_DESCRIPTION)
 def index() -> None:
     # Page heading
@@ -67,8 +69,10 @@ def index() -> None:
     else:
         url='https://'+url
     # url =trueurl(url)
-    # put_text('bot is busy crawling now',url)
-    put_loading(shape='border', color='success').style('width:4rem; height:4rem')
+
+    with use_scope('loading'):
+
+        put_loading(shape='border', color='success').style('width:4rem; height:4rem')
     clear('introduction')
 
 
@@ -79,19 +83,25 @@ def index() -> None:
         with battery.redirect_stdout():
 
             urls= crawler(url,1)
-    data=[]
-    for i in len(urls):
-        item =[].append(i,urls[i],url)
-        data.append(item)
-    # put_logbox('log',200)
-
-        # logbox_append('log',)
+    print(urls,'====')
+    clear('loading')
     clear('log')
-    # qufen html   image  video 
-    put_file(urlparse(url).netloc+'.txt', data, 'download me')
-    put_collapse('preview urls',put_table(data, header=['id', 'url', 'domain']))
 
+    urls=list(urls)
+    if len(urls)<1:
+        put_text('there is no url found in this domain',url)
+    else:        
+        data=[]
+        for idx, item in enumerate(urls):
+            item =[].append(idx,item,url)
+            data.append(item)
+        # put_logbox('log',200)
 
+            # logbox_append('log',)
+        # qufen html   image  video 
+        put_file(urlparse(url).netloc+'.txt', data, 'download me')
+        put_collapse('preview urls',put_table(data, header=['id', 'url', 'domain']))
+    put_button("Try again", onclick=lambda:run_js(return_home), color='success', outline=True)
 home = asgi_app(index)
 
 app.mount("/", home)
