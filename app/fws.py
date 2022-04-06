@@ -19,7 +19,7 @@ def crawler(domain, mute):
     filename =urlparse(domain).netloc
 
     ofile='data'+filename+'.txt'
-    print('start',domain)
+    print('starting  ',domain)
     try:
         # a queue of urls to be crawled
         new_urls = deque([domain])
@@ -40,7 +40,7 @@ def crawler(domain, mute):
             url = new_urls.popleft()
             processed_urls.add(url)
             # get url's content
-            print("detecting url  %s" % url)
+            print("detected url  %s" % url)
             # try:
             #     response = requests.head(url)
             # except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
