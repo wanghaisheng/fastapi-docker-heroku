@@ -16,9 +16,10 @@ import subprocess
 import argparse
 
 def crawler(domain, mute):
-    domain =urlparse(url).netloc
+    filename =urlparse(domain).netloc
 
-    ofile=domain+'.txt'
+    ofile=filename+'.txt'
+    print('start',domain)
     try:
         # a queue of urls to be crawled
         new_urls = deque([domain])
@@ -39,18 +40,14 @@ def crawler(domain, mute):
             url = new_urls.popleft()
             processed_urls.add(url)
             # get url's content
-            print("Processing %s" % url)
-            try:
-                response = requests.head(url)
-            except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
-                # add broken urls to it's own set, then continue
-                broken_urls.add(url)
-                continue
+            print("detecting url  %s" % url)
+            # try:
+            #     response = requests.head(url)
+            # except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
+            #     # add broken urls to it's own set, then continue
+            #     broken_urls.add(url)
+            #     continue
 
-            if 'content-type' in response.headers:
-                content_type = response.headers['content-type']
-                if not 'text/html' in content_type:
-                    continue
 
             try:
                 response = requests.get(url)
@@ -58,7 +55,15 @@ def crawler(domain, mute):
                 # add broken urls to it's own set, then continue
                 broken_urls.add(url)
                 continue
-            
+            if 'content-type' in response.headers:
+                content_type = response.headers['content-type']
+                if not 'text/html' in content_type:
+                    continue   
+                if '4' in str(response.status_code):
+                    broken_urls.add(url)
+                    print('url is broken',url)
+
+                    continue                    
             # extract base url to resolve relative links
             parts = urlsplit(url)
             base = "{0.netloc}".format(parts)
@@ -73,8 +78,8 @@ def crawler(domain, mute):
                 href=True)}
             srcs = {i.get("src") for i in text.find_all(
                 src=True)}
-            print('count href link',len(hrefs))
-            print('count srcs link',len(srcs))
+            # print('count href link',len(hrefs))
+            # print('count srcs link',len(srcs))
 
             # Loop over the URLs in the current page
             for anchor in hrefs | srcs:
@@ -107,21 +112,24 @@ def crawler(domain, mute):
                     new_urls.append(i)
 
             # print('=======\n',local_urls)
-        print("post Processing")
+        # print("post Processing")
 
-        for url in local_urls:
-            try:
-                response = requests.head(url)
+        # for url in local_urls:
+        #     try:
+        #         response = requests.head(url)
 
-                if 'content-type' in response.headers:
-                    content_type = response.headers['content-type']
-                    if not 'text/html' in content_type:
-                        continue          
-                    local_urls_html.add(url)  
-            except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
-                # add broken urls to it's own set, then continue
-                broken_urls.add(url)
-                continue
+        #         if 'content-type' in response.headers:
+        #             content_type = response.headers['content-type']
+        #             if not 'text/html' in content_type:
+        #                 continue          
+        #             local_urls_html.add(url)  
+        #             if '4' in str(response.status_code):
+        #                 broken_urls.add(url)
+        #                 continue                                      
+        #     except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
+        #         # add broken urls to it's own set, then continue
+        #         broken_urls.add(url)
+        #         continue
 
         if mute is False:
             if ofile is not None:
@@ -134,7 +142,7 @@ def crawler(domain, mute):
             else:
                 mute_report(local_urls)
     
-        return local_urls_html
+        return local_urls
 
     except KeyboardInterrupt:
         local_urls_html=[]

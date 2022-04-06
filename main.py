@@ -11,6 +11,8 @@ from pywebio.platform.page import config
 from pywebio.session import run_js, set_env
 from pywebio.platform.fastapi import asgi_app
 import time
+import pywebio_battery as battery
+
 app = FastAPI()
 apiapp = FastAPI()
 def trueurl(url):
@@ -102,21 +104,30 @@ def index() -> None:
         pass
     else:
         url='https://'+url
-    url =trueurl(url)
-    # put_text('bot is busy crawling now')
+    # url =trueurl(url)
+    # put_text('bot is busy crawling now',url)
     put_loading(shape='border', color='success').style('width:4rem; height:4rem')
     clear('introduction')
-    urls= crawler(url,1)
+
+
+    put_html('</br>')
+    set_env(auto_scroll_bottom=True)
+    with use_scope('log'):
+
+        with battery.redirect_stdout():
+
+            urls= crawler(url,1)
     data=[]
     for i in len(urls):
         item =[].append(i,urls[i],url)
         data.append(item)
     # put_logbox('log',200)
-    # with battery.redirect_stdout():
 
         # logbox_append('log',)
-    put_table(data, header=['id', 'url', 'domain'])
-
+    clear('log')
+    # qufen html   image  video 
+    put_file(urlparse(url).netloc+'.txt', data, 'download me')
+    put_collapse('preview urls',put_table(data, header=['id', 'url', 'domain']))
 
 
 home = asgi_app(index)

@@ -3,3 +3,4 @@ sitemapgen==0.9.8
 requests
 orjson
 pywebio
+pywebio_battery
