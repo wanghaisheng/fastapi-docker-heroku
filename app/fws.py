@@ -18,7 +18,7 @@ import argparse
 def crawler(domain, mute):
     filename =urlparse(domain).netloc
 
-    ofile=filename+'.txt'
+    ofile='data'+filename+'.txt'
     print('start',domain)
     try:
         # a queue of urls to be crawled
