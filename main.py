@@ -19,6 +19,24 @@ def trueurl(url):
 
     r = requests.head(url, allow_redirects=True)
     return r.url
+
+
+import advertools as adv
+
+@apiapp.get("/sitemap_to_df/", response_class=ORJSONResponse)
+async def sitemap(url:str):
+    print('check url',url)
+    if url.startswith("http://"):
+        domain =urlparse(domain).netloc
+    elif url.startswith("https://"):
+        domain =urlparse(domain).netloc
+
+    else:
+       domain=url.split('/')[0]    
+    sitemap_to_df= adv.sitemap_to_df('https://'+domain+'/robots.txt', recursive=False)
+    sitemaps=list(set(sitemap_to_df['sitemap'].tolist()))
+    return sitemap_to_df.to_json(orient = "records")
+
 @apiapp.get("/sitemap/", response_class=ORJSONResponse)
 async def sitemap(url:str):
     print('check url',url)
@@ -106,6 +124,7 @@ home = asgi_app(index)
 
 app.mount("/", home)
 app.mount("/api", apiapp)
+app.mount("/sitemap_to_df", apiapp)
 
 
 if __name__ == '__main__':

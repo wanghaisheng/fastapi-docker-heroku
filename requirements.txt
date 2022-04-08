@@ -6,3 +6,4 @@ pywebio
 pywebio_battery
 aiofiles
 websockets
+advertools

@@ -533,11 +533,11 @@ popular_shopify_stores=[
 "http://www.sticks.com"
 ]
 
-SEO_TITLE = "ShopConna™ shopify store link detect "
+SEO_TITLE = "ShopConan™ shopify store link detect "
 SEO_DESCRIPTION = "shopify store watch toolkit"
 
 LANDING_PAGE_HEADING = r"""
-<h1 align="center"><strong>ShopConna™ shopify store link detect </strong></h1>
+<h1 align="center"><strong>ShopConan™ shopify store link detect </strong></h1>
 """
 
 PRODUCT_HUNT_FEATURED_BANNER = r"""
@@ -545,14 +545,14 @@ PRODUCT_HUNT_FEATURED_BANNER = r"""
 """
 
 LANDING_PAGE_SUBHEADING = r"""
-<h3 align="center">ShopConna™ shopify store watch toolkit</h1>
+<h3 align="center">ShopConan™ shopify store watch toolkit</h1>
 <p align="center">
     <img alt="Cheers" class="img" width="50%" height="50%" src="https://media.giphy.com/media/DGWAx8d3IkICs/giphy.gif">
 </p>
 """
 
 LANDING_PAGE_DESCRIPTION_English = r"""
-# What is ShopConna™?
+# What is ShopConan™?
 As part of shopify store watch toolkit,This  shopify store link detect project aims to detect all links in a shopify store and then monitor them daily,if there is any changes we can notify through wechat .
 
 🔎 A free **brand watch tool** for influencers.

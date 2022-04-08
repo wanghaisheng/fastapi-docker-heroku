@@ -1,4 +1,4 @@
-import pywebio_battery as battery
+import advertools as adv
 
-with battery.redirect_stdout():
-    print("Hello world.")
+bbc_sitemap = adv.sitemap_to_df('http://www.cettire.com/robots.txt', recursive=False)
+print(bbc_sitemap.head(10))
