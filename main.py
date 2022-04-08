@@ -23,9 +23,10 @@ def trueurl(url):
 
 
 
-@app.get("/sitemap_to_df/", response_class=ORJSONResponse)
+@app.get("/sitemapurl/", response_class=ORJSONResponse)
 async def sitemap1(url:str):
     print('check url',url)
+    domain=''
     if url.startswith("http://"):
         domain =urlparse(domain).netloc
     elif url.startswith("https://"):
@@ -33,11 +34,12 @@ async def sitemap1(url:str):
 
     else:
        domain=url.split('/')[0]    
+    print('domain is ',domain)
     sitemap_to_df= adv.sitemap_to_df('https://'+domain+'/robots.txt', recursive=False)
     sitemaps=list(set(sitemap_to_df['sitemap'].tolist()))
     return sitemap_to_df.to_json(orient = "records")
 
-@app.get("/sitemap/", response_class=ORJSONResponse)
+@app.get("/crawlurl/", response_class=ORJSONResponse)
 async def sitemap(url:str):
     print('check url',url)
     # if not isvaliddomain(url):
@@ -50,7 +52,7 @@ async def sitemap(url:str):
         url='https://'+url
     url =trueurl(url)
 
-    urls= crawler(url,'report.txt',1)
+    urls= crawler(url,1)
 
     print(urls)
 
