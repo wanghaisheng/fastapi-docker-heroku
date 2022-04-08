@@ -17,7 +17,7 @@ import advertools as adv
 
 app = FastAPI()
 apiapp = FastAPI()
-
+router = FastAPI.APIRouter()
 def trueurl(url):
 
     r = requests.head(url, allow_redirects=True)
@@ -25,7 +25,7 @@ def trueurl(url):
 
 
 
-@apiapp.get("/sitemap_to_df/", response_class=ORJSONResponse)
+@router.get("/sitemap_to_df/", response_class=ORJSONResponse)
 async def sitemap1(url:str):
     print('check url',url)
     if url.startswith("http://"):
@@ -39,7 +39,7 @@ async def sitemap1(url:str):
     sitemaps=list(set(sitemap_to_df['sitemap'].tolist()))
     return sitemap_to_df.to_json(orient = "records")
 
-@apiapp.get("/sitemap/", response_class=ORJSONResponse)
+@router.get("/sitemap/", response_class=ORJSONResponse)
 async def sitemap(url:str):
     print('check url',url)
     # if not isvaliddomain(url):
@@ -125,6 +125,7 @@ def index() -> None:
 home = asgi_app(index)
 
 apiapp.mount("/", home)
+apiapp.include_router(router)
 
 
 if __name__ == '__main__':
