@@ -25,7 +25,7 @@ def trueurl(url):
 
 
 
-@app.get("/sitemap_to_df/", response_class=ORJSONResponse)
+@apiapp.get("/sitemap_to_df/", response_class=ORJSONResponse)
 async def sitemap1(url:str):
     print('check url',url)
     if url.startswith("http://"):
@@ -124,9 +124,7 @@ def index() -> None:
     put_button("Try again", onclick=lambda:run_js(return_home), color='success', outline=True)
 home = asgi_app(index)
 
-app.mount("/", home)
-app.mount("/api", apiapp)
-app.mount("/sitemap_to_df", apiapp)
+apiapp.mount("/", home)
 
 
 if __name__ == '__main__':
