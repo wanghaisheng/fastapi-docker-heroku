@@ -9,6 +9,12 @@
 [Git](https://git-scm.com/) (or just download the repo)  
 [Heroku cli](https://devcenter.heroku.com/articles/heroku-cli) (to run the heroku commands)
 
+
+## db backend
+
+https://github.com/vicogarcia16/fastapi_airtable
+
+
 ## Heroku
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/wanghaisheng/fastapi-docker-heroku)
