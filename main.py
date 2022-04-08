@@ -15,6 +15,8 @@ import pywebio_battery as battery
 from app.constants import *
 app = FastAPI()
 apiapp = FastAPI()
+sitemap_to_df = FastAPI()
+
 def trueurl(url):
 
     r = requests.head(url, allow_redirects=True)
@@ -23,7 +25,7 @@ def trueurl(url):
 
 import advertools as adv
 
-@apiapp.get("/sitemap_to_df/", response_class=ORJSONResponse)
+@sitemap_to_df.get("/sitemap_to_df/", response_class=ORJSONResponse)
 async def sitemap(url:str):
     print('check url',url)
     if url.startswith("http://"):
@@ -124,7 +126,7 @@ home = asgi_app(index)
 
 app.mount("/", home)
 app.mount("/api", apiapp)
-app.mount("/sitemap_to_df", apiapp)
+app.mount("/sitemap_to_df", sitemap_to_df)
 
 
 if __name__ == '__main__':
