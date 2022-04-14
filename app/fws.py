@@ -109,27 +109,32 @@ def crawler(domain, mute):
 
             for i in local_urls:
                 if not i in new_urls and not i in processed_urls:
-                    new_urls.append(i)
+                    if filename in i:
+
+                        new_urls.append(i)
 
             # print('=======\n',local_urls)
         # print("post Processing")
 
-        # for url in local_urls:
-        #     try:
-        #         response = requests.head(url)
+        for url in local_urls:
+            try:
+                response = requests.head(url)
 
-        #         if 'content-type' in response.headers:
-        #             content_type = response.headers['content-type']
-        #             if not 'text/html' in content_type:
-        #                 continue          
-        #             local_urls_html.add(url)  
-        #             if '4' in str(response.status_code):
-        #                 broken_urls.add(url)
-        #                 continue                                      
-        #     except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
-        #         # add broken urls to it's own set, then continue
-        #         broken_urls.add(url)
-        #         continue
+                if 'content-type' in response.headers:
+                    content_type = response.headers['content-type']
+                    if not 'text/html' in content_type:
+                        continue          
+                    if '4' in str(response.status_code):
+                        broken_urls.add(url)
+                        continue   
+                    else:
+                        if filename in url:
+                            local_urls_html.add(url)  
+                          
+            except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
+                # add broken urls to it's own set, then continue
+                broken_urls.add(url)
+                continue
 
         if mute is False:
             if ofile is not None:
