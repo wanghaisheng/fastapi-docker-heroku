@@ -17,12 +17,14 @@ import argparse
 
 def crawler(domain, mute):
     filename =urlparse(domain).netloc
-
+    if 'www' in filename:
+        filename=filename.replace('www.','')
     ofile='data'+filename+'.txt'
     print('starting  ',domain)
     try:
         # a queue of urls to be crawled
         new_urls = deque([domain])
+        print(new_urls)
         # a set of urls that we have already crawled
         processed_urls = set()
         # a set of domains inside the target website
@@ -78,8 +80,8 @@ def crawler(domain, mute):
                 href=True)}
             srcs = {i.get("src") for i in text.find_all(
                 src=True)}
-            # print('count href link',len(hrefs))
-            # print('count srcs link',len(srcs))
+            print('count href link',len(hrefs))
+            print('count srcs link',len(srcs))
 
             # Loop over the URLs in the current page
             for anchor in hrefs | srcs:
@@ -93,7 +95,10 @@ def crawler(domain, mute):
                     continue                
                 if anchor == "#" or "linkedin" in anchor or "\\" in anchor:
                     continue
-                if anchor.startswith('/'):
+                if anchor.startswith('//'):
+                    local_link = anchor
+                    local_urls.add(local_link)                
+                elif anchor.startswith('/'):
                     local_link = base_url + anchor
                     local_urls.add(local_link)
                 elif strip_base in anchor:
@@ -102,7 +107,9 @@ def crawler(domain, mute):
                     local_link = path + anchor
                     local_urls.add(local_link)
                 else:
-                    foreign_urls.add(anchor)
+                    if not filename in anchor:
+
+                        foreign_urls.add(anchor)
 
 
 
@@ -114,40 +121,46 @@ def crawler(domain, mute):
                         new_urls.append(i)
 
             # print('=======\n',local_urls)
-        # print("post Processing")
+        print("post Processing",len(local_urls))
+        local_urls=list(set(local_urls))
+        print("post Processing",len(local_urls))
 
-        for url in local_urls:
-            try:
-                response = requests.head(url)
-
-                if 'content-type' in response.headers:
-                    content_type = response.headers['content-type']
-                    if not 'text/html' in content_type:
-                        continue          
-                    if '4' in str(response.status_code):
-                        broken_urls.add(url)
-                        continue   
-                    else:
-                        if filename in url:
-                            local_urls_html.add(url)  
-                          
-            except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
-                # add broken urls to it's own set, then continue
-                broken_urls.add(url)
-                continue
-
-        if mute is False:
-            if ofile is not None:
-                report_file(ofile, processed_urls, local_urls, foreign_urls, broken_urls)
+        for idx,url in enumerate(local_urls):
+            print(idx,'url',url)
+            if url.startswith('//'):
+                pass
             else:
-                report(processed_urls, local_urls, foreign_urls, broken_urls)
-        else:
-            if ofile is not None:
-                mute_report_file(ofile, local_urls)
-            else:
-                mute_report(local_urls)
+                try:
+                    response = requests.head(url)
+
+                    if 'content-type' in response.headers:
+                        content_type = response.headers['content-type']
+                        if not 'text/html' in content_type:
+                            continue          
+                        if '4' in str(response.status_code):
+                            broken_urls.add(url)
+                            continue   
+                        else:
+                            if filename in url:
+                                local_urls_html.add(url)  
+                            
+                except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema):
+                    # add broken urls to it's own set, then continue
+                    broken_urls.add(url)
+                    continue
+
+        # if mute is False:
+        #     if ofile is not None:
+        #         report_file(ofile, processed_urls, local_urls, foreign_urls, broken_urls)
+        #     else:
+        #         report(processed_urls, local_urls, foreign_urls, broken_urls)
+        # else:
+        #     if ofile is not None:
+        #         mute_report_file(ofile, local_urls)
+        #     else:
+        #         mute_report(local_urls)
     
-        return local_urls
+        return local_urls_html
 
     except KeyboardInterrupt:
         local_urls_html=[]
