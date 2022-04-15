@@ -84,6 +84,34 @@ async def sitemap(url: str):
     return {"urls": urls}
 
 
+
+@app.get("/subdomain/", response_class=ORJSONResponse)
+async def subdomain(url: str):
+    print('check url', url)
+    # if not isvaliddomain(url):
+    #     return {"urls": 'not a valid domain'}
+    if url.startswith("http://"):
+        pass
+    elif url.startswith("https://"):
+        pass
+    else:
+        url = 'https://'+url
+    url = trueurl(url)
+
+    urls = crawler(url, 1)
+    domains=[]
+    for url in urls:
+        filename =urlparse(url).netloc
+        if 'www' in filename:
+            filename=filename.replace('www.','')
+        domains.append(url)
+    print(urls)
+    return {"domains": list(set(domains))}
+
+
+
+
+
 return_home = """
 location.href='/'
 """
@@ -113,7 +141,7 @@ def index() -> None:
 
     data = input_group("advertool is fast for most,insane is your last straw",[
         input("input your target domain", datalist=popular_shopify_stores,name='url'),
-        radio("with or without sitemap?", ['advertool', 'insane crawl'],inline=True,name='q1')
+        radio("with or without sitemap?", ['advertool', 'insane crawl','subdomain'],inline=True,name='q1')
 
     ], validate=check_form)
 
@@ -146,8 +174,28 @@ def index() -> None:
 
     #         urls = crawler(url, 1)
     data = []
+    if q1=='subdomain':
+        urls = crawler(url, 1)
+        domains=[]
+        for url in urls:
+            filename =urlparse(url).netloc
+            if 'www' in filename:
+                filename=filename.replace('www.','')
+            domains.append(url)
 
-    if q1 == 'advertool':
+        urls = list(set(domains))
+        if len(urls) < 1:
+            put_text('there is no subdomain found in this domain', url)
+            put_button("Try again", onclick=lambda: run_js(
+                return_home), color='success', outline=True)
+        else:
+            for idx, item in enumerate(urls):
+                t=[]
+                t.append(idx)
+                t.append(item)
+                t.append(url)
+                data.append(t)    
+    elif q1 == 'advertool':
         urls = sitemap1(url)['results']
 
         # urls = list(urls)
