@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 import requests
+import pandas as pd
+
 from app.fws import *
 from fastapi.responses import ORJSONResponse
 import uvicorn
@@ -43,9 +45,15 @@ def sitemap1(url: str):
     if not 'www' in domain:
         domain = 'www.'+domain
     try:
-        index = adv.sitemap_to_df(
-            'https://'+domain+'/robots.txt', recursive=False)['loc'].tolist()
-        print(index)
+        filename =urlparse(url).netloc
+        index=[]
+        if not os.path.exists(filename+'-adv-sitemap.jl'):
+
+            index = adv.sitemap_to_df(
+                'https://'+domain+'/robots.txt', recursive=False)['loc'].tolist()
+            index.to_json(filename+'-adv-sitemap.jl')
+        else:
+            index=pd.read_json(filename+'-adv-sitemap.jl')
         urls = []
         for url in index:
             locs = adv.sitemap_to_df(url)['loc'].tolist()
@@ -139,9 +147,9 @@ def index() -> None:
     # run_js(HEADER)
     # run_js(FOOTER)
 
-    data = input_group("advertool is fast for most,insane is your last straw",[
+    data = input_group("sitemap is fast for most,insane is your last straw for those dont have /robots.txt file ",[
         input("input your target domain", datalist=popular_shopify_stores,name='url'),
-        radio("with or without sitemap?", ['advertool', 'insane crawl','subdomain'],inline=True,name='q1')
+        radio("with or without sitemap?", ['sitemap', 'crawl','subdomain'],inline=True,name='q1')
 
     ], validate=check_form)
 
@@ -175,7 +183,18 @@ def index() -> None:
     #         urls = crawler(url, 1)
     data = []
     if q1=='subdomain':
-        urls = crawler(url, 1)
+        urls=[]
+        with use_scope('log'):
+
+            with battery.redirect_stdout():
+                filename =urlparse(url).netloc
+                if not os.path.exists(filename+'-adv.jl'):
+                    adv.crawl(url, filename+'-adv.jl', follow_links=True)
+
+                crawl_df = pd.read_json(filename+'-adv.jl', lines=True)
+
+                urls = crawl_df['url'].tolist()
+        # urls = crawler(url, 1)
         domains=[]
         for url in urls:
             filename =urlparse(url).netloc
@@ -195,8 +214,14 @@ def index() -> None:
                 t.append(item)
                 t.append(url)
                 data.append(t)    
-    elif q1 == 'advertool':
-        urls = sitemap1(url)['results']
+    elif q1 == 'sitemap':
+        urls=[]
+        with use_scope('log'):
+
+            with battery.redirect_stdout():
+
+
+                urls = sitemap1(url)['results']
 
         # urls = list(urls)
         # print(urls)
@@ -218,7 +243,19 @@ def index() -> None:
 
                 data.append(t)
     else:
-        urls = crawler(url, 1)
+        urls=[]
+        with use_scope('log'):
+                # urls = crawler(url, 1)
+            with battery.redirect_stdout():
+                filename =urlparse(url).netloc
+                if not os.path.exists(filename+'-adv.jl'):
+                    adv.crawl(url, filename+'-adv.jl', follow_links=True)
+
+                crawl_df = pd.read_json(filename+'-adv.jl', lines=True)
+
+                urls = crawl_df['url'].tolist()
+
+
         urls = list(urls)
         if len(urls) < 1:
             put_text('there is no url found in this domain', url)
