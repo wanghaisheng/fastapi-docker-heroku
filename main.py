@@ -30,7 +30,7 @@ def trueurl(url):
 
 @app.get("/sitemapurl/", response_class=ORJSONResponse)
 def sitemap1(url: str):
-    print('check url', url)
+    # print('check url', url)
     domain = ''
     results = []
 
@@ -147,7 +147,7 @@ def index() -> None:
     # run_js(HEADER)
     # run_js(FOOTER)
 
-    data = input_group("sitemap is fast for most,insane is your last straw for those dont have /robots.txt file ",[
+    data = input_group("sitemap is fast for most,insane crawl is your last straw for those dont have /robots.txt file ",[
         input("input your target domain", datalist=popular_shopify_stores,name='url'),
         radio("with or without sitemap?", ['sitemap', 'crawl','subdomain'],inline=True,name='q1')
 
@@ -182,6 +182,10 @@ def index() -> None:
 
     #         urls = crawler(url, 1)
     data = []
+    data_product=[]
+    data_collection=[]
+    data_pages=[]
+    data_blog=[]
     if q1=='subdomain':
         urls=[]
         with use_scope('log'):
@@ -189,12 +193,15 @@ def index() -> None:
             with battery.redirect_stdout():
                 filename =urlparse(url).netloc
                 if not os.path.exists(filename+'-adv.jl'):
-                    adv.crawl(url, filename+'-adv.jl', follow_links=True)
+                    put_text('first crawl for this domain ,it will takes some time')
+
+                    adv.crawl(url, filename+'-adv.jl', follow_links=True,exclude_url_params=True)
 
                 crawl_df = pd.read_json(filename+'-adv.jl', lines=True)
 
                 urls = crawl_df['url'].tolist()
-        # urls = crawler(url, 1)
+        clear('log')
+
         domains=[]
         for url in urls:
             filename =urlparse(url).netloc
@@ -213,35 +220,95 @@ def index() -> None:
                 t.append(idx)
                 t.append(item)
                 t.append(url)
-                data.append(t)    
+                data.append(t)   
+                if 'collection' in item:
+                    print('collection')
+                    data_collection.append(t)
+                elif 'blog' in item:
+                    print('blog')
+
+                    data_blog.append(t)
+                elif 'product' in item:
+                    print('product')
+
+                    data_product.append(t)
+                elif 'pages' in item:
+                    data_pages.append(t)                 
     elif q1 == 'sitemap':
         urls=[]
-        with use_scope('log'):
+        filename =urlparse(url).netloc
+        if  os.path.exists(filename+'-adv.jl'):
 
-            with battery.redirect_stdout():
+            crawl_df = pd.read_json(filename+'-adv.jl', lines=True)
 
+            urls = crawl_df['url'].tolist()
 
-                urls = sitemap1(url)['results']
+            urls = list(urls)
+            if len(urls) < 1:
+                put_text('there is no url found in this domain', url)
+                put_button("Try again", onclick=lambda: run_js(
+                    return_home), color='success', outline=True)
+            else:
+                for idx, item in enumerate(urls):
+                    t=[]
+                    t.append(idx)
+                    t.append(item)
+                    t.append(url)
+                    data.append(t)
+                    if 'collection' in item:
+                        print('collection')
+                        data_collection.append(t)
+                    elif 'blog' in item:
+                        print('blog')
 
-        # urls = list(urls)
-        # print(urls)
-        if len(urls) < 1:
-            put_text('there is no url found in this domain', url)
-            put_button("Try again", onclick=lambda: run_js(
-                return_home), color='success', outline=True)
+                        data_blog.append(t)
+                    elif 'product' in item:
+                        print('product')
+
+                        data_product.append(t)
+                    elif 'pages' in item:
+                        data_pages.append(t)
         else:
-            urls = urls[0]['urls']
-            locs = []
-            for idx, item in enumerate(urls):
-                locs.extend(item['loc'])
-            for idx, item in enumerate(locs):
-                t=[]
-                t.append(idx)
-                t.append(item)
-                t.append(url)
-                print('======',t)
 
-                data.append(t)
+            with use_scope('log'):
+
+                with battery.redirect_stdout():
+
+
+                    urls = sitemap1(url)['results']
+            clear('log')
+
+            # urls = list(urls)
+            # print(urls)
+            if len(urls) < 1:
+                put_text('there is no url found in this domain', url)
+                put_button("Try again", onclick=lambda: run_js(
+                    return_home), color='success', outline=True)
+            else:
+                urls = urls[0]['urls']
+                locs = []
+                for idx, item in enumerate(urls):
+                    locs.extend(item['loc'])
+                for idx, item in enumerate(locs):
+                    t=[]
+                    t.append(idx)
+                    t.append(item)
+                    t.append(url)
+                    # print('======',t)
+                    if 'collection' in item:
+                        print('collection')
+                        data_collection.append(t)
+                    elif 'blog' in item:
+                        print('blog')
+
+                        data_blog.append(t)
+                    elif 'product' in item:
+                        print('product')
+
+                        data_product.append(t)
+                    elif 'pages' in item:
+                        data_pages.append(t)
+                    data.append(t)
     else:
         urls=[]
         with use_scope('log'):
@@ -249,12 +316,13 @@ def index() -> None:
             with battery.redirect_stdout():
                 filename =urlparse(url).netloc
                 if not os.path.exists(filename+'-adv.jl'):
-                    adv.crawl(url, filename+'-adv.jl', follow_links=True)
-
+                    put_text('first crawl for this domain ,it will takes some time')
+                adv.crawl(url, filename+'-adv.jl', follow_links=True,exclude_url_params=True,custom_settings={'CLOSESPIDER_PAGECOUNT': 10000})
                 crawl_df = pd.read_json(filename+'-adv.jl', lines=True)
 
                 urls = crawl_df['url'].tolist()
 
+        clear('log')
 
         urls = list(urls)
         if len(urls) < 1:
@@ -268,9 +336,22 @@ def index() -> None:
                 t.append(item)
                 t.append(url)
                 data.append(t)
-    print(data, '====')
-    clear('loading')
-    clear('log')
+                print(item)
+                if 'collection' in item:
+                    print('collection')
+                    data_collection.append(t)
+                elif 'blog' in item:
+                    print('blog')
+
+                    data_blog.append(t)
+                elif 'product' in item:
+                    print('product')
+
+                    data_product.append(t)
+                elif 'pages' in item:
+                    data_pages.append(t)
+    # print(data, '====')
+
 
     # put_logbox('log',200)
     if len(data) > 0:
@@ -279,11 +360,27 @@ def index() -> None:
             encoded=encoded+','.join(str(i))
             encoded=encoded+'\n'
         # array=bytearray(encoded.encode('utf-8'))
-        put_file(urlparse(url).netloc+'.txt', encoded.encode('utf-8'), 'download me')
-        put_collapse('preview urls', put_table(
-            data, header=['id', 'url', 'domain']))
+        clear('loading')
+        clear('log')
+        
+        put_collapse('preview all, display  500 max', put_table(
+            data[:500], header=['id', 'url', 'domain']))
+        put_collapse('preview collection', put_table(
+            data_collection, header=['id', 'url', 'domain']))
+        put_collapse('preview product', put_table(
+            data_product, header=['id', 'url', 'domain']))
+        put_collapse('preview pages', put_table(
+            data_pages, header=['id', 'url', 'domain']))
+        put_collapse('preview blog', put_table(
+            data_blog, header=['id', 'url', 'domain']))            
+        put_row([
         put_button("Try again", onclick=lambda: run_js(
-            return_home), color='success', outline=True)
+            return_home), color='success', outline=True),
+        put_button("Back to Top", onclick=lambda: run_js(
+            scroll_to('ROOT', position='top') ), color='success', outline=True),
+        put_file(urlparse(url).netloc+'.txt', bytes(encoded, 'utf-8'), 'download all')             
+             ])                   
+
 
 
 home = asgi_app(index)

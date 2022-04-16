@@ -8,3 +8,5 @@ aiofiles
 websockets
 advertools
 pandas
+dataframetodb
+connectorx
