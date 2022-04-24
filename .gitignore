@@ -69,3 +69,4 @@ package-lock.json
 __pycache__
 app/__pycache__
 data/
+.env

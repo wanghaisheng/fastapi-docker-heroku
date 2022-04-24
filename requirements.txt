@@ -10,3 +10,9 @@ advertools
 pandas
 dataframetodb
 connectorx
+shot-scraper
+click
+sqlmodel
+supabase==0.5.3
+python-dotenv
+tenacity
