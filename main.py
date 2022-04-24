@@ -74,13 +74,7 @@ def trueurl(url):
 
     r = requests.head(url, allow_redirects=True)
     return r.url
-
-
-@app.get("/sitemapurl/", response_class=ORJSONResponse)
-def sitemap1(url: str):
-    # print('check url', url)
-    domain = ''
-    results = []
+def formatdomain(url):
 
     if url.startswith("http://"):
         domain = urlparse(url).netloc
@@ -92,6 +86,14 @@ def sitemap1(url: str):
     print('domain is ', domain)
     if not 'www' in domain:
         domain = 'www.'+domain
+    return domain    
+
+@app.get("/sitemapurl/", response_class=ORJSONResponse)
+def sitemap1(url: str):
+    # print('check url', url)
+    domain = formatdomain(url)
+    results = []
+
     try:
         filename =urlparse(url).netloc
         index=[]
@@ -125,14 +127,7 @@ def sitemap1(url: str):
 @app.get("/crawlurl/", response_class=ORJSONResponse)
 async def sitemap(url: str):
     print('check url', url)
-    # if not isvaliddomain(url):
-    #     return {"urls": 'not a valid domain'}
-    if url.startswith("http://"):
-        pass
-    elif url.startswith("https://"):
-        pass
-    else:
-        url = 'https://'+url
+
     url = trueurl(url)
 
     urls = crawler(url, 1)
@@ -149,12 +144,7 @@ async def subdomain(url: str):
     print('check url', url)
     # if not isvaliddomain(url):
     #     return {"urls": 'not a valid domain'}
-    if url.startswith("http://"):
-        pass
-    elif url.startswith("https://"):
-        pass
-    else:
-        url = 'https://'+url
+
     url = trueurl(url)
 
     urls = crawler(url, 1)
@@ -242,7 +232,8 @@ def index() -> None:
         with use_scope('log'):
 
             with battery.redirect_stdout():
-                filename =urlparse(url).netloc
+                filename = formatdomain(url)
+
                 domain=filename
                 data = supabase_db.table("shops").select(
                     'subdomains').eq("domain", domain).execute()
@@ -284,7 +275,7 @@ def index() -> None:
                 data.append(t)                  
     else:
         urls=[]
-        filename =urlparse(url).netloc
+        filename = formatdomain(url)
         domain=filename
         data = supabase_db.table("shops").select(
             'urls').eq("domain", domain).execute()
