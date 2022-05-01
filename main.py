@@ -353,7 +353,7 @@ def index() -> None:
         for i in data:
             encoded = encoded+','.join(str(i))
             encoded = encoded+'\n'
-        # array=bytearray(encoded.encode('utf-8'))
+        array=encoded.encode('utf-8')
         clear('loading')
         clear('log')
 
@@ -373,7 +373,7 @@ def index() -> None:
             put_button("Back to Top", onclick=lambda: run_js(
                 scroll_to('ROOT', position='top')), color='success', outline=True),
             put_file(urlparse(url).netloc+'.txt',
-                     bytes(encoded, 'utf-8'), 'download all')
+                     array, 'download all')
         ])
 
 
