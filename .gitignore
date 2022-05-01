@@ -70,3 +70,5 @@ __pycache__
 app/__pycache__
 data/
 .env
+indiehackers*
+shein*

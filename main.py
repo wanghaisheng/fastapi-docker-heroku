@@ -1,3 +1,4 @@
+from platform import uname_result
 from fastapi import FastAPI
 import requests
 import pandas as pd
@@ -20,13 +21,28 @@ from app.constants import *
 import advertools as adv
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from tenacity import *
+from urllib.parse import urlparse, unquote_plus, urlunparse
 
-
+from usp.objects.page import (
+    SitemapPage,
+    SitemapNewsStory,
+    SitemapPageChangeFrequency,
+)
+from usp.objects.sitemap import (
+    IndexRobotsTxtSitemap,
+    PagesXMLSitemap,
+    IndexXMLSitemap,
+    InvalidSitemap,
+    PagesTextSitemap,
+    IndexWebsiteSitemap,
+    PagesRSSSitemap,
+    PagesAtomSitemap,
+)
+from usp.tree import sitemap_tree_for_homepage
 # 加载文件
 load_dotenv(".env")
 supabase_url = os.environ.get('supabase_url')
-supabase_url = 'https://bwrzzupfhzjzvuglmpwx.supabase.co'
+# supabase_url = 'https://bwrzzupfhzjzvuglmpwx.supabase.co'
 
 print(supabase_url)
 supabase_apikey = os.environ.get('supabase_apikey')
@@ -35,21 +51,34 @@ supabase_db: Client = create_client(supabase_url, supabase_apikey)
 
 app = FastAPI()
 
+def strip_url_to_homepage(url: str) -> str:
+    """
+    Strip URL to its homepage.
+    :param url: URL to strip, e.g. "http://www.example.com/page.html".
+    :return: Stripped homepage URL, e.g. "http://www.example.com/"
+    """
+    # if not url:
+    #     raise StripURLToHomepageException("URL is empty.")
 
-# supabase: Client = create_client(url, key)
-# # Create a random user login email and password.
-# random_email: str = "3hf82fijf92@supamail.com"
-# random_password: str = "fqj13bnf2hiu23h"
-# user = supabase.auth.sign_up(email=random_email, password=random_password)
+    try:
+        uri = urlparse(url)
+        assert uri.scheme, "Scheme must be set."
+        assert uri.scheme.lower() in ['http', 'https'], "Scheme must be http:// or https://"
+        uri = (
+            uri.scheme,
+            uri.netloc,
+            '/',  # path
+            '',  # params
+            '',  # query
+            '',  # fragment
+        )
+        url = urlunparse(uri)
+    except Exception as ex:
+        print("Unable to parse URL {}: {}".format(url, ex))
 
-# supabase: Client = create_client(url, key)
-# # Sign in using the user email and password.
-# random_email: str = "3hf82fijf92@supamail.com"
-# random_password: str = "fqj13bnf2hiu23h"
-# user = supabase.auth.sign_in(email=random_email, password=random_password)
+    return url
 
 
-@retry(stop=stop_after_attempt(10))
 def supabaseupdate(tablename, user, domain):
     try:
         data = supabase_db.table(tablename).update(
@@ -58,7 +87,6 @@ def supabaseupdate(tablename, user, domain):
         raise Exception
 
 
-@retry(stop=stop_after_attempt(3))
 def supabaseop(tablename, users):
     try:
         data = supabase_db.table(tablename).insert(users).execute()
@@ -123,8 +151,8 @@ def sitemap1(url: str):
     return {"results": results}
 
 
-@app.get("/crawlurl/", response_class=ORJSONResponse)
-async def sitemap(url: str):
+@app.get("/laststraw/", response_class=ORJSONResponse)
+async def laststraw(url: str):
     print('check url', url)
 
     url = trueurl(url)
@@ -169,6 +197,18 @@ def check_form(data):
     pass
 
 
+def does_url_exist(url):
+    try: 
+        r = requests.head(url)
+        if r.status_code < 400:
+            return True
+        else:
+            return False
+    except requests.exceptions.RequestException as e:
+        print(e)
+        # handle your exception
+
+
 @config(theme="minty", title=SEO_TITLE, description=SEO_DESCRIPTION)
 def index() -> None:
     # Page heading
@@ -186,11 +226,11 @@ def index() -> None:
     # run_js(HEADER)
     # run_js(FOOTER)
 
-    inputdata = input_group("sitemap is fast for most,insane crawl is your last straw for those dont have /robots.txt file ", [
+    inputdata = input_group("usp is  fast for most, adv sitemap is plan B,insane crawl is your last straw for those dont have /robots.txt file ", [
         input("input your target domain",
               datalist=popular_shopify_stores, name='url'),
         radio("with or without sitemap?", [
-              'sitemap', 'subdomain'], inline=True, name='q1')
+              'adv sitemap', 'insanecrawl','usp','subdomain'], inline=True, name='q1')
 
     ], validate=check_form)
 
@@ -260,6 +300,7 @@ def index() -> None:
                         domains.append(url)
 
                     urls = list(set(domains))
+                    print('url=====',urls)
                     supabaseupdate('shop', {'subdomains': urls}, domain)
         clear('log')
 
@@ -274,78 +315,134 @@ def index() -> None:
                 t.append(item)
                 t.append(url)
                 data.append(t)
+    elif q1=='insanecrawl':
+        start = time.time()
+        domain = trueurl(domain)
+
+        urls = crawler(domain, 1)
+        end = time.time()
+        put_text('Parsing is complete! time consuming: %.4fs' %
+                    (end - start))
+
+    elif q1=='usp':
+        start = time.time()
+
+        tree = sitemap_tree_for_homepage(url)
+        # SitemapPage(url=https://www.indiehackers.com/forum/the-business-of-podcasting-with-jeff-meyerson-of-software-engineering-daily-e2b157d5de, priority=0.2, last_modified=2019-09-04 18:27:13+00:00, change_frequency=SitemapPageChangeFrequency.MONTHLY, news_story=None)
+
+        urls=[x.url for x in tree.all_pages()]
+        end = time.time()
+        put_text('Parsing is complete! time consuming: %.4fs' %
+                    (end - start))
+    elif q1=='sitemapdetect':
+        start = time.time()
+
+
+        tree = sitemap_tree_for_homepage(url)
+        # SitemapPage(url=https://www.indiehackers.com/forum/the-business-of-podcasting-with-jeff-meyerson-of-software-engineering-daily-e2b157d5de, priority=0.2, last_modified=2019-09-04 18:27:13+00:00, change_frequency=SitemapPageChangeFrequency.MONTHLY, news_story=None)
+        if InvalidSitemap in tree.sub_sitemaps:
+            print('you need last straw')
+            urls = crawler(url, 1)
+
+        else:
+            robot=tree.sub_sitemaps[0].url
+            indexxmlsimap=[ x.url for x in tree.sub_sitemaps[0].sub_sitemaps]
+            urls=[ x.url for x in tree.all_pages]
+
+        #  IndexWebsiteSitemap(url=http://www.cettire.com/, sub_sitemaps=[InvalidSitemap(url=http://www.cettire.com/robots.txt, reason=No parsers support sitemap from http://www.cettire.com/robots.txt)])
+        # 根据这个结果 我们可以对url进行分类 这种情况只能暴力crawl
+        end = time.time()
+        put_text('Parsing is complete! time consuming: %.4fs' %
+                    (end - start))        
     else:
+        start = time.time()
+
         urls = []
+        urllocs=[]
         filename = formatdomain(url)
         domain = filename
         data = supabase_db.table("shops").select(
             'urls').eq("domain", domain).execute()
-        # print(type(data))
+        print(type(data))
         # print('existing db',len(supabase_db.table("tiktoka_douyin_users").select('uid').execute()[0]),data,data[0])
         if len(data.data) > 0:
             print('this domain data exist', domain, data.data)
             urls = data.data
         else:
+            print('this domain data dont exist', domain, data.data)
 
             with use_scope('log'):
 
                 with battery.redirect_stdout():
-                    index = adv.sitemap_to_df(
-                        'https://'+domain+'/robots.txt', recursive=False)['loc'].tolist()
-                    index.to_json(filename+'-adv-sitemap.jl')
-                    sitemapurls = []
-                    for url in index:
-                        # data = supabase.table("shop_sitemaps").insert({"name":"Germany"}).execute()
+                    url=''
+                    if does_url_exist('https://'+domain+'/robots.txt'):
+                        url='https://'+domain+'/robots.txt'
+                    elif does_url_exist('https://'+domain+'/sitemap.xml'):
+                        # print('--',index)
+                        url='https://'+domain+'/sitemap.xml'
+                    else:
+                        print('there is no sitemap for this domain')
+                    if not url=='':
+                        index = adv.sitemap_to_df(
+                            url, recursive=False)
+                        index=index['loc'].tolist()
+                        index.to_json(filename+'-adv-sitemap.jl')
+                        sitemapurls = []
+                        if len(index) == 0:
+                            print('there is no url found ')
+                        else:
+                            for url in index:
+                                # data = supabase.table("shop_sitemaps").insert({"name":"Germany"}).execute()
 
-                        locs = adv.sitemap_to_df(url)['loc'].tolist()
-                        urllocs = {"sitemap": url,
-                                   "loc": locs}
-                        sitemapurls.append(url)
-                        urls.append(urllocs)
-                    if len(urls) == 0:
-                        domain = trueurl(domain)
+                                locs = adv.sitemap_to_df(url)['loc'].tolist()
+                                urlloc = {"sitemap": url,
+                                        "loc": locs}
+                                urllocs.append(urlloc)
 
-                        urls = crawler(domain, 1)
 
-                    supabaseop(
-                        'shop', {"domain": domain, 'subdomains': urls, "sitemapurls": sitemapurls})
+                        supabaseop(
+                            'shop', {"domain": domain, 'subdomains': urllocs, "sitemapurls": sitemapurls})
 
             clear('log')
 
             # urls = list(urls)
             # print(urls)
-            if len(urls) < 1:
-                put_text('there is no url found in this domain', url)
+            if len(urllocs) < 1:
+                put_text('there is no url found in this domain', urllocs)
                 put_text('report us through email: whs860603@gmail.com')
 
                 put_button("Try another", onclick=lambda: run_js(
                     return_home), color='success', outline=True)
             else:
 
-                urls = urls[0]['urls']
-                locs = []
-                for idx, item in enumerate(urls):
-                    locs.extend(item['loc'])
-                for idx, item in enumerate(locs):
-                    t = []
-                    t.append(idx)
-                    t.append(item)
-                    t.append(url)
-                    # print('======',t)
-                    if 'collection' in item:
-                        print('collection')
-                        data_collection.append(t)
-                    elif 'blog' in item:
-                        print('blog')
+                urlloc = urllocs[0]['urls']
+                # locs = []
+                for idx, item in enumerate(urlloc):
+                    urls.extend(item['loc'])
+        end = time.time()
+        put_text('Parsing is complete! time consuming: %.4fs' %
+                    (end - start))
 
-                        data_blog.append(t)
-                    elif 'product' in item:
-                        print('product')
+    for idx, item in enumerate(urls):
+        t = []
+        t.append(idx)
+        t.append(item)
+        t.append(url)
+        # print('======',t)
+        if 'collection' in item:
+            # print('collection')
+            data_collection.append(t)
+        elif 'blog' in item:
+            # print('blog')
 
-                        data_product.append(t)
-                    elif 'pages' in item:
-                        data_pages.append(t)
-                    data.append(t)
+            data_blog.append(t)
+        elif 'product' in item:
+            # print('product')
+
+            data_product.append(t)
+        elif 'pages' in item:
+            data_pages.append(t)
+        data.append(t)
 
     # put_logbox('log',200)
     if len(data) > 0:

@@ -2,8 +2,36 @@ import advertools as adv
 # import pandas as pd
 # # bbc_sitemap = adv.sitemap_to_df('http://www.cettire.com/robots.txt', recursive=False)
 # # print(bbc_sitemap.head(10))
-adv.crawl('https://www.indiehackers.com', 'indiehackers'+'-adv.jl',
-                              follow_links=True, exclude_url_params=True)
+# adv.crawl('https://www.indiehackers.com', 'indiehackers'+'-adv.jl',
+                            #   follow_links=True, exclude_url_params=True)
+
+
+
+from usp.objects.page import (
+    SitemapPage,
+    SitemapNewsStory,
+    SitemapPageChangeFrequency,
+)
+from usp.objects.sitemap import (
+    IndexRobotsTxtSitemap,
+    PagesXMLSitemap,
+    IndexXMLSitemap,
+    InvalidSitemap,
+    PagesTextSitemap,
+    IndexWebsiteSitemap,
+    PagesRSSSitemap,
+    PagesAtomSitemap,
+)
+from usp.tree import sitemap_tree_for_homepage
+tree = sitemap_tree_for_homepage('http://www.cettire.com')
+# tree = IndexXMLSitemap('https://www.indiehackers.com/')
+# all_pages() returns an Iterator
+print('=======\n',tree)
+for page in tree.all_pages():
+    print(page.url)
+robot=tree.sub_sitemaps[0].url
+# indexxmlsimap=[ x.url for x in tree.sub_sitemaps[0].sub_sitemaps]
+# print('========\n',indexxmlsimap)
 
 # adv.crawl('https://dogsexdolls.com', 'my_output_file.jl', follow_links=True)
 # crawl_df = pd.read_json('my_output_file.jl', lines=True)
