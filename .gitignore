@@ -70,5 +70,7 @@ __pycache__
 app/__pycache__
 data/
 .env
-indiehackers*
-shein*
+indiehackers.txt
+
+shein.com.txt
+shein.com.zip
