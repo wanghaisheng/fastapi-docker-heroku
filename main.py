@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from fastapi import FastAPI
 import requests
 from ESD import EnumSubDomain
@@ -454,7 +456,7 @@ def index() -> None:
         clear('loading')
         clear('log')
 
-        put_collapse('preview all, display  500 max', put_table(
+        put_collapse('total results: '+str(len(data))+', preview  max 500', put_table(
             data[:500], header=['id', 'url', 'domain']))
         put_collapse('preview collection', put_table(
             data_collection, header=['id', 'url', 'domain']))

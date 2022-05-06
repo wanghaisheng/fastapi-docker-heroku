@@ -12,6 +12,16 @@
 
 ## db backend
 
+airtable
+
+supabase
+
+tidbcloud
+
+googlesheet
+
+firebase
+
 https://github.com/vicogarcia16/fastapi_airtable
 
 
