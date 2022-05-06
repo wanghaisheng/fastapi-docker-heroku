@@ -1,5 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+
+import sys
+sys.setrecursionlimit(5000)
+
 from pywebio.utils import pyinstaller_datas
 block_cipher = None
 
