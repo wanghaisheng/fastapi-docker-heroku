@@ -16,7 +16,7 @@ datas = pyinstaller_datas()
 
 if platform.system() == 'Windows':
 
-    a = Analysis(['/main.py'],
+    a = Analysis(['./main.py'],
                  pathex=[],
                  binaries=[],
                  datas=datas,
