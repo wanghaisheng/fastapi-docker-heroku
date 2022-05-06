@@ -10,6 +10,14 @@
 [Heroku cli](https://devcenter.heroku.com/articles/heroku-cli) (to run the heroku commands)
 
 
+
+
+## release
+git tag v1.0
+git push
+git push origin --tags
+
+
 ## db backend
 
 airtable
