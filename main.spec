@@ -2,12 +2,9 @@
 
 
 import sys
-sys.setrecursionlimit(5000)
 
+sys.setrecursionlimit(# dupes)
 from pywebio.utils import pyinstaller_datas
-block_cipher = None
-
-# -*- mode: python ; coding: utf-8 -*-
 import platform
 
 block_cipher = None
