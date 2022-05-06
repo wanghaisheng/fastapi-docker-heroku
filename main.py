@@ -1,7 +1,6 @@
-from platform import uname_result
 from fastapi import FastAPI
 import requests
-import pandas as pd
+from ESD import EnumSubDomain
 
 from app.fws import *
 from fastapi.responses import ORJSONResponse
@@ -165,6 +164,13 @@ async def laststraw(url: str):
     return {"urls": urls}
 
 
+@app.get("/esd/", response_class=ORJSONResponse)
+async def esd(url: str):
+
+
+    domains = EnumSubDomain(url).run()
+    return {"domains": list(set(domains))}
+
 @app.get("/subdomain/", response_class=ORJSONResponse)
 async def subdomain(url: str):
     print('check url', url)
@@ -230,7 +236,7 @@ def index() -> None:
         input("input your target domain",
               datalist=popular_shopify_stores, name='url'),
         radio("with or without sitemap?", [
-              'adv sitemap', 'insanecrawl','usp','subdomain'], inline=True, name='q1')
+              'adv sitemap', 'insanecrawl','usp','subdomain','esd'], inline=True, name='q1')
 
     ], validate=check_form)
 
@@ -269,6 +275,8 @@ def index() -> None:
     data_blog = []
     if q1 == 'subdomain':
         urls = []
+        start = time.time()
+
         with use_scope('log'):
 
             with battery.redirect_stdout():
@@ -280,24 +288,13 @@ def index() -> None:
                 # print(type(data))
                 # print('existing db',len(supabase_db.table("tiktoka_douyin_users").select('uid').execute()[0]),data,data[0])
                 if len(data.data) > 0:
-                    print('this user exist', domain, data.data)
+                    print('this domain exist', domain, data.data)
                     urls = data.data
                 else:
                     put_text(
                         'first crawl for this domain ,it will takes some time')
+                    domains = EnumSubDomain(url).run()
 
-                    adv.crawl(url, filename+'-adv.jl',
-                              follow_links=True, exclude_url_params=True)
-
-                    crawl_df = pd.read_json(filename+'-adv.jl', lines=True)
-
-                    urls = crawl_df['url'].tolist()
-                    domains = []
-                    for url in urls:
-                        filename = urlparse(url).netloc
-                        if 'www' in filename:
-                            filename = filename.replace('www.', '')
-                        domains.append(url)
 
                     urls = list(set(domains))
                     print('url=====',urls)
@@ -315,6 +312,9 @@ def index() -> None:
                 t.append(item)
                 t.append(url)
                 data.append(t)
+        end = time.time()
+        put_text('Parsing is complete! time consuming: %.4fs' %
+                    (end - start))                
     elif q1=='insanecrawl':
         start = time.time()
         domain = trueurl(domain)

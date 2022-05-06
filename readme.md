@@ -29,6 +29,16 @@ https://link-discovery.herokuapp.com/sitemap/?url=https://x.hacking8.com/
 
 
 
+fastapi-crudrouter
+fastapi-cloudauth
+
+
+
+pip install esd
+python==3.7
+
+from ESD import EnumSubDomain
+domains = EnumSubDomain('feei.cn').run()
 #
 https://github.com/sfu-db/connector-x/discussions/270
 
