@@ -3,14 +3,16 @@ bs4==0.0.1
 requests==2.27.1
 orjson==3.6.7
 pywebio==1.6.0
-pywebio_battery
+pywebio_battery==0.1.0
 aiofiles==0.6.0
-websockets==10.3
+# websockets==10.3
 advertools==0.13.0
 uvicorn==0.17.6
-supabase
-python-dotenv
-ultimate-sitemap-parser
+anyio==3.4.0
+supabase==0.5.4
+python-dotenv==0.19.0
+python_dateutil==2.8.1
+ultimate-sitemap-parser==0.5
 esd==0.0.29
 httpcore==0.14.7
 h11==0.12.0

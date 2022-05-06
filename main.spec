@@ -1,7 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
+
 from pywebio.utils import pyinstaller_datas
-
-
 block_cipher = None
 
 

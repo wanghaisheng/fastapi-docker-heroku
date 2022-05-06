@@ -1,0 +1,157 @@
+name: Build and Release Assets
+
+on:
+  push:
+    tags:
+    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+
+  linux:
+    runs-on: ubuntu-18.04
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create environment and install dependencies
+      run: |
+        $CONDA/bin/conda env create --file environment.yml --name link-detect
+
+    - name: Create binary
+      run: |
+        $CONDA/envs/link-detect/bin/pyinstaller --clean -y --dist ./dist/linux ./main.spec
+
+    - name: Zip binary
+      run: |
+        cd ./dist/linux
+        zip link-detect-linux.zip link-detect
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: link-detect-linux
+        path: ./dist/linux/link-detect-linux.zip
+
+  macos:
+    runs-on: macos-10.15
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create environment and install dependencies
+      run: |
+        sudo $CONDA/bin/conda env create --file environment.yml --name link-detect
+
+    - name: Create macos app
+      run: |
+        $CONDA/envs/link-detect/bin/pyinstaller --clean -y --dist ./dist/macos ./main.spec
+        rm -rf ./dist/macos/link-detect
+
+    - name: Zip binary
+      run: |
+        cd ./dist/macos
+        zip -r link-detect-macos.zip .
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: link-detect-macos
+        path: ./dist/macos/link-detect-macos.zip
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create environment and install dependencies
+      run: |
+        %CONDA%\Scripts\conda.exe env create ^
+        --file environment.yml --name link-detect
+      shell: cmd
+
+    - name: Create binary
+      run: |
+        %CONDA%\envs\link-detect\Scripts\pyinstaller.exe ^
+        --clean -y --dist .\dist\windows .\main.spec
+      shell: cmd
+
+    - name: Zip binary
+      run: |
+        cd .\dist\windows
+        powershell Compress-Archive link-detect.exe link-detect-windows.zip
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: link-detect-windows
+        path: .\dist\windows\link-detect-windows.zip
+
+  release:
+    needs: [ linux, macos, windows ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: true
+
+      - name: Get tag version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: link-detect-linux
+        continue-on-error: true
+
+      - name: Upload Linux Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./link-detect-linux/link-detect-linux.zip
+          asset_name: link-detect-linux-${{ steps.get_version.outputs.VERSION }}.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: link-detect-macos
+        continue-on-error: true
+
+      - name: Upload MacOS Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./link-detect-macos/link-detect-macos.zip
+          asset_name: link-detect-macos-${{ steps.get_version.outputs.VERSION }}.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: link-detect-windows
+        continue-on-error: true
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./link-detect-windows/link-detect-windows.zip
+          asset_name: link-detect-windows-${{ steps.get_version.outputs.VERSION }}.zip
+          asset_content_type: application/zip
+        continue-on-error: true
