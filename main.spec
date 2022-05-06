@@ -3,9 +3,9 @@
 
 import sys
 
-sys.setrecursionlimit(# dupes)
 from pywebio.utils import pyinstaller_datas
 import platform
+sys.setrecursionlimit(# dupes)
 
 block_cipher = None
 
