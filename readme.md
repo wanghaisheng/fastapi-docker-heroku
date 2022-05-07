@@ -12,6 +12,9 @@
 
 
 
+shopconanofficial@gmail.com
+
+
 ## release
 git tag v1.0
 git push
@@ -19,6 +22,12 @@ git push origin --tags
 
 
 ## db backend
+
+https://github.com/encode/databases
+
+https://github.com/tiangolo/sqlmodel
+
+https://github.com/graphql-python/graphene
 
 airtable
 

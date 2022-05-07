@@ -1,111 +1,50 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
-import sys
-
-from pywebio.utils import pyinstaller_datas
-import platform
-sys.setrecursionlimit(# dupes)
-
 block_cipher = None
 
-datas = pyinstaller_datas()
 
-if platform.system() == 'Windows':
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[('D:\\Program Files\\anaconda3\\envs\\pack\\lib\\site-packages\\eel\\eel.js', 'eel'), ('build', 'build')],
+    hiddenimports=['bottle_websocket', 'sqlalchemy.sql.default_comparator'],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-    a = Analysis(['./main.py'],
-                 pathex=[],
-                 binaries=[],
-                 datas=datas,
-                 hiddenimports=[],
-                 hookspath=[],
-                 runtime_hooks=[],
-                 excludes=[],
-                 win_no_prefer_redirects=False,
-                 win_private_assemblies=False,
-                 cipher=block_cipher,
-                 noarchive=True)
-    pyz = PYZ(a.pure, a.zipped_data,
-              cipher=block_cipher)
-    exe = EXE(pyz,
-              a.scripts,
-              a.binaries,
-              a.zipfiles,
-              a.datas,
-              [],
-              name='link-detect',
-              debug=True,
-              bootloader_ignore_signals=False,
-              strip=False,
-              upx=False,
-              upx_exclude=[],
-              runtime_tmpdir=None,
-              console=False,
-              icon='./icon.ico')
-
-elif platform.system() == 'Linux':
-
-    a = Analysis(['./main.py'],
-                 pathex=[],
-                 binaries=[],
-                 datas=datas,
-                 hiddenimports=[],
-                 hookspath=[],
-                 runtime_hooks=[],
-                 excludes=[],
-                 win_no_prefer_redirects=False,
-                 win_private_assemblies=False,
-                 cipher=block_cipher,
-                 noarchive=False)
-    pyz = PYZ(a.pure, a.zipped_data,
-              cipher=block_cipher)
-    exe = EXE(pyz,
-              a.scripts,
-              a.binaries,
-              a.zipfiles,
-              a.datas,
-              [],
-              name='link-detect',
-              debug=True,
-              bootloader_ignore_signals=False,
-              strip=False,
-              upx=True,
-              upx_exclude=[],
-              runtime_tmpdir=None,
-              console=True)
-
-elif platform.system() == 'Darwin':
-
-    a = Analysis(['./main.py'],
-                 pathex=[],
-                 binaries=[],
-                 datas=datas,
-                 hiddenimports=[],
-                 hookspath=[],
-                 runtime_hooks=[],
-                 excludes=[],
-                 win_no_prefer_redirects=False,
-                 win_private_assemblies=False,
-                 cipher=block_cipher,
-                 noarchive=False)
-    pyz = PYZ(a.pure, a.zipped_data,
-              cipher=block_cipher)
-    exe = EXE(pyz,
-              a.scripts,
-              a.binaries,
-              a.zipfiles,
-              a.datas,
-              [],
-              name='link-detect',
-              debug=False,
-              bootloader_ignore_signals=False,
-              strip=False,
-              upx=True,
-              upx_exclude=[],
-              runtime_tmpdir=None,
-              console=False,
-              icon='./icon.icns')
-    app = BUNDLE(exe,
-                 name='link-detect.app',
-                 icon='./icon.icns',
-                 bundle_identifier=None)
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='main',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='main',
+)

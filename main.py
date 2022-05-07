@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 import requests
 from ESD import EnumSubDomain
-
+import validators
 from app.fws import *
 from fastapi.responses import ORJSONResponse
 import uvicorn
@@ -15,13 +15,16 @@ from pywebio.platform.page import config
 from pywebio.session import run_js, set_env
 from pywebio import config, session
 
-from pywebio.platform.fastapi import asgi_app
+from pywebio.platform.fastapi import webio_routes,asgi_app
+
 import time
 import pywebio_battery as battery
 from app.constants import *
+from app.privacy import privacy
+from app.terms import terms
+from app.t import *
+from app.feedback import *
 import advertools as adv
-from supabase import create_client, Client
-from dotenv import load_dotenv
 from urllib.parse import urlparse, unquote_plus, urlunparse
 
 from usp.objects.page import (
@@ -40,15 +43,6 @@ from usp.objects.sitemap import (
     PagesAtomSitemap,
 )
 from usp.tree import sitemap_tree_for_homepage
-# 加载文件
-load_dotenv(".env")
-supabase_url = os.environ.get('supabase_url')
-# supabase_url = 'https://bwrzzupfhzjzvuglmpwx.supabase.co'
-
-print(supabase_url)
-supabase_apikey = os.environ.get('supabase_apikey')
-print(supabase_apikey)
-supabase_db: Client = create_client(supabase_url, supabase_apikey)
 
 app = FastAPI()
 
@@ -60,7 +54,7 @@ def strip_url_to_homepage(url: str) -> str:
     """
     # if not url:
     #     raise StripURLToHomepageException("URL is empty.")
-
+    domain=''
     try:
         uri = urlparse(url)
         assert uri.scheme, "Scheme must be set."
@@ -73,26 +67,14 @@ def strip_url_to_homepage(url: str) -> str:
             '',  # query
             '',  # fragment
         )
-        url = urlunparse(uri)
+        domain = urlunparse(uri)
     except Exception as ex:
         print("Unable to parse URL {}: {}".format(url, ex))
 
-    return url
+    return domain
 
 
-def supabaseupdate(tablename, user, domain):
-    try:
-        data = supabase_db.table(tablename).update(
-            user).eq("domain", domain).execute()
-    except:
-        raise Exception
 
-
-def supabaseop(tablename, users):
-    try:
-        data = supabase_db.table(tablename).insert(users).execute()
-    except:
-        raise Exception
 
 
 def trueurl(url):
@@ -224,9 +206,9 @@ def index() -> None:
     lang = 'English'
     if lang == 'English':
         LANDING_PAGE_DESCRIPTION = LANDING_PAGE_DESCRIPTION_English
-    session.run_js(
+    run_js(
         'WebIO._state.CurrentSession.on_session_close(()=>{setTimeout(()=>location.reload(), 40000})')
-
+    run_js(FOOTER)
     with use_scope('introduction'):
         # put_html(PRODUCT_HUNT_FEATURED_BANNER)
         # put_html(LANDING_PAGE_SUBHEADING)
@@ -238,12 +220,13 @@ def index() -> None:
         input("input your target domain",
               datalist=popular_shopify_stores, name='url'),
         radio("with or without sitemap?", [
-              'adv sitemap', 'insanecrawl','usp','subdomain','esd'], inline=True, name='q1')
+              'usp','subdomain','adv sitemap', 'insanecrawl'], inline=True, value='usp',name='q1')
 
     ], validate=check_form)
 
     url = inputdata['url']
-    print('check url', url)
+    print('raw url', url)
+        
 
     q1 = inputdata['q1']
     # if not isvaliddomain(url):
@@ -254,232 +237,267 @@ def index() -> None:
         pass
     else:
         url = 'https://'+url
-    # url =trueurl(url)
+    print('format url', url)
+    
 
-    with use_scope('loading'):
-
-        put_loading(shape='border', color='success').style(
-            'width:4rem; height:4rem')
     clear('introduction')
 
-    put_html('</br>')
-    set_env(auto_scroll_bottom=True)
-    urls = []
-    # with use_scope('log'):
+    if not validators.url(url):
 
-    #     with battery.redirect_stdout():
+        put_text('pls give us a valid url')
+        put_button("Try again", onclick=lambda: run_js(
+                        return_home), color='success', outline=True)        
+    else:
 
-    #         urls = crawler(url, 1)
-    data = []
-    data_product = []
-    data_collection = []
-    data_pages = []
-    data_blog = []
-    if q1 == 'subdomain':
-        urls = []
-        start = time.time()
+        url =strip_url_to_homepage(url)
+        print('domain in  url', url)
 
-        with use_scope('log'):
+        print('root domain in  url', url)        
+        url =trueurl(url)
+        with use_scope('loading'):
 
-            with battery.redirect_stdout():
-                filename = formatdomain(url)
+            put_loading(shape='border', color='success').style(
+                'width:4rem; height:4rem')
+            put_text('ShopConan is working on it')
 
-                domain = filename
-                data = supabase_db.table("shops").select(
-                    'subdomains').eq("domain", domain).execute()
-                # print(type(data))
-                # print('existing db',len(supabase_db.table("tiktoka_douyin_users").select('uid').execute()[0]),data,data[0])
-                if len(data.data) > 0:
-                    print('this domain exist', domain, data.data)
-                    urls = data.data
+
+            put_html('</br>')
+            set_env(auto_scroll_bottom=True)
+            urls = []
+            # with use_scope('log'):
+
+            #     with battery.redirect_stdout():
+
+            #         urls = crawler(url, 1)
+            data = []
+            data_product = []
+            data_collection = []
+            data_pages = []
+            data_blog = []
+            backend='sqlite'
+            domain_in_url = formatdomain(url)
+            if backend=='supabase':
+                from app.supabase.dbmanipulation import Query_urls_list_In_Db,Update_urls_list_In_Db
+            elif backend=='sqlite':
+                from app.sqlite.dbmanipulation import Query_urls_list_In_Db,Update_urls_list_In_Db
+            urls=Query_urls_list_In_Db(domain_in_url)
+
+            print('=====',len(urls))
+            if len(urls)==0:
+
+
+                if q1 == 'subdomain':
+                    start = time.time()
+
+                    with use_scope('log'):
+
+                        with battery.redirect_stdout():
+
+
+                            put_text(
+                                'first crawl for this domain ,it will takes some time')
+                            domains = EnumSubDomain(url).run()
+
+
+                            urls = list(set(domains))
+                            print('url=====',urls)
+                            supabaseupdate('shop', {'subdomains': urls}, domain)
+                    clear('log')
+
+                    if len(urls) < 1:
+                        put_text('there is no subdomain found in this domain', url)
+                        put_button("Try again", onclick=lambda: run_js(
+                            return_home), color='success', outline=True)
+                    else:
+                        for idx, item in enumerate(urls):
+                            t = []
+                            t.append(str(idx))
+                            t.append(item)
+                            t.append(url)
+                            data.append(t)
+                    end = time.time()
+                    put_text('Parsing is complete! time consuming: %.4fs' %
+                                (end - start))                
+                elif q1=='insanecrawl':
+                    start = time.time()
+                    domain = trueurl(domain)
+
+                    urls = crawler(domain, 1)
+                    end = time.time()
+                    put_text('Parsing is complete! time consuming: %.4fs' %
+                                (end - start))
+
+                elif q1=='usp':
+                    print('==============usp is started==============')
+
+                    start = time.time()
+
+                    tree = sitemap_tree_for_homepage(url)
+                    # SitemapPage(url=https://www.indiehackers.com/forum/the-business-of-podcasting-with-jeff-meyerson-of-software-engineering-daily-e2b157d5de, priority=0.2, last_modified=2019-09-04 18:27:13+00:00, change_frequency=SitemapPageChangeFrequency.MONTHLY, news_story=None)
+
+                    urls=[x.url for x in tree.all_pages()]
+                    end = time.time()
+                    put_text('Parsing is complete! time consuming: %.4fs' %
+                                (end - start))
+                    print('==============usp is done==============')
+                elif q1=='sitemapdetect':
+                    start = time.time()
+
+
+                    tree = sitemap_tree_for_homepage(url)
+                    # SitemapPage(url=https://www.indiehackers.com/forum/the-business-of-podcasting-with-jeff-meyerson-of-software-engineering-daily-e2b157d5de, priority=0.2, last_modified=2019-09-04 18:27:13+00:00, change_frequency=SitemapPageChangeFrequency.MONTHLY, news_story=None)
+                    if InvalidSitemap in tree.sub_sitemaps:
+                        print('you need last straw')
+                        urls = crawler(url, 1)
+
+                    else:
+                        robot=tree.sub_sitemaps[0].url
+                        indexxmlsimap=[ x.url for x in tree.sub_sitemaps[0].sub_sitemaps]
+                        urls=[ x.url for x in tree.all_pages]
+
+                    #  IndexWebsiteSitemap(url=http://www.cettire.com/, sub_sitemaps=[InvalidSitemap(url=http://www.cettire.com/robots.txt, reason=No parsers support sitemap from http://www.cettire.com/robots.txt)])
+                    # 根据这个结果 我们可以对url进行分类 这种情况只能暴力crawl
+                    end = time.time()
+                    put_text('Parsing is complete! time consuming: %.4fs' %
+                                (end - start))        
                 else:
-                    put_text(
-                        'first crawl for this domain ,it will takes some time')
-                    domains = EnumSubDomain(url).run()
+                    start = time.time()
+
+                    urls = []
+                    urllocs=[]
+                # print('existing db',len(supabase_db.table("tiktoka_douyin_users").select('uid').execute()[0]),data,data[0])
+
+                    print('this domain data dont exist', domain, data.data)
+
+                    with use_scope('log'):
+
+                        with battery.redirect_stdout():
+                            url=''
+                            if does_url_exist('https://'+domain+'/robots.txt'):
+                                url='https://'+domain+'/robots.txt'
+                            elif does_url_exist('https://'+domain+'/sitemap.xml'):
+                                # print('--',index)
+                                url='https://'+domain+'/sitemap.xml'
+                            else:
+                                print('there is no sitemap for this domain')
+                            if not url=='':
+                                index = adv.sitemap_to_df(
+                                    url, recursive=False)
+                                index=index['loc'].tolist()
+                                # index.to_json(filename+'-adv-sitemap.jl')
+                                sitemapurls = []
+                                if len(index) == 0:
+                                    print('there is no url found ')
+                                else:
+                                    for url in index:
+                                        # data = supabase.table("shop_sitemaps").insert({"name":"Germany"}).execute()
+
+                                        locs = adv.sitemap_to_df(url)['loc'].tolist()
+                                        urlloc = {"sitemap": url,
+                                                "loc": locs}
+                                        urllocs.append(urlloc)
 
 
-                    urls = list(set(domains))
-                    print('url=====',urls)
-                    supabaseupdate('shop', {'subdomains': urls}, domain)
-        clear('log')
+                                supabaseop(
+                                    'shop', {"domain": domain, 'subdomains': urllocs, "sitemapurls": sitemapurls})
 
-        if len(urls) < 1:
-            put_text('there is no subdomain found in this domain', url)
-            put_button("Try again", onclick=lambda: run_js(
-                return_home), color='success', outline=True)
-        else:
-            for idx, item in enumerate(urls):
+                        clear('log')
+
+                        # urls = list(urls)
+                        # print(urls)
+                        if len(urllocs) < 1:
+                            put_text('there is no url found in this domain', urllocs)
+                            put_text('report us through email: shopconanofficial@gmail.com')
+
+                            put_button("Try another", onclick=lambda: run_js(
+                                return_home), color='success', outline=True)
+                        else:
+
+                            urlloc = urllocs[0]['urls']
+                            # locs = []
+                            for idx, item in enumerate(urlloc):
+                                urls.extend(item['loc'])
+                    end = time.time()
+                    put_text('Parsing is complete! time consuming: %.4fs' %
+                                (end - start))
+                Update_urls_list_In_Db(urls,url)
+            put_text('Preparing downloading files')
+            print('length',len(urls))
+            preview=urls
+
+            if len(urls)>500:
+                preview=urls[:499]
+            for idx, item in enumerate(preview):
                 t = []
-                t.append(idx)
+                t.append(str(idx))
                 t.append(item)
                 t.append(url)
+                # print('======',t)
+                if 'collection' in item:
+                    # print('collection')
+                    data_collection.append(t)
+                elif 'blog' in item:
+                    # print('blog')
+
+                    data_blog.append(t)
+                elif 'product' in item:
+                    # print('product')
+
+                    data_product.append(t)
+                elif 'pages' in item:
+                    data_pages.append(t)
                 data.append(t)
-        end = time.time()
-        put_text('Parsing is complete! time consuming: %.4fs' %
-                    (end - start))                
-    elif q1=='insanecrawl':
-        start = time.time()
-        domain = trueurl(domain)
+            clear('loading')
 
-        urls = crawler(domain, 1)
-        end = time.time()
-        put_text('Parsing is complete! time consuming: %.4fs' %
-                    (end - start))
+            # put_logbox('log',200)
+            if len(urls) > 0:
+                encoded = ''
+                for i in urls:
+                    print(i,type(i))
+                    # encoded = encoded+','.join(list(i))
+                    encoded+=i
+                    encoded = encoded+'\n'
+                array=encoded.encode('utf-8')
+                clear('log')
 
-    elif q1=='usp':
-        start = time.time()
+                put_collapse('total results: '+str(len(urls))+', only can preview first 500', put_table(
+                    data[:500], header=['id', 'url', 'domain']))
+                put_collapse('preview collection', put_table(
+                    data_collection, header=['id', 'url', 'domain']))
+                put_collapse('preview product', put_table(
+                    data_product, header=['id', 'url', 'domain']))
+                put_collapse('preview pages', put_table(
+                    data_pages, header=['id', 'url', 'domain']))
+                put_collapse('preview blog', put_table(
+                    data_blog, header=['id', 'url', 'domain']))
+                put_row([
+                    put_button("Try again", onclick=lambda: run_js(
+                        return_home), color='success', outline=True),
+                    put_button("Back to Top", onclick=lambda: run_js(
+                        scroll_to('ROOT', position='top')), color='success', outline=True),
+                    put_file(urlparse(url).netloc+'.txt',
+                            array, 'download all')
+                ])
 
-        tree = sitemap_tree_for_homepage(url)
-        # SitemapPage(url=https://www.indiehackers.com/forum/the-business-of-podcasting-with-jeff-meyerson-of-software-engineering-daily-e2b157d5de, priority=0.2, last_modified=2019-09-04 18:27:13+00:00, change_frequency=SitemapPageChangeFrequency.MONTHLY, news_story=None)
-
-        urls=[x.url for x in tree.all_pages()]
-        end = time.time()
-        put_text('Parsing is complete! time consuming: %.4fs' %
-                    (end - start))
-    elif q1=='sitemapdetect':
-        start = time.time()
-
-
-        tree = sitemap_tree_for_homepage(url)
-        # SitemapPage(url=https://www.indiehackers.com/forum/the-business-of-podcasting-with-jeff-meyerson-of-software-engineering-daily-e2b157d5de, priority=0.2, last_modified=2019-09-04 18:27:13+00:00, change_frequency=SitemapPageChangeFrequency.MONTHLY, news_story=None)
-        if InvalidSitemap in tree.sub_sitemaps:
-            print('you need last straw')
-            urls = crawler(url, 1)
-
-        else:
-            robot=tree.sub_sitemaps[0].url
-            indexxmlsimap=[ x.url for x in tree.sub_sitemaps[0].sub_sitemaps]
-            urls=[ x.url for x in tree.all_pages]
-
-        #  IndexWebsiteSitemap(url=http://www.cettire.com/, sub_sitemaps=[InvalidSitemap(url=http://www.cettire.com/robots.txt, reason=No parsers support sitemap from http://www.cettire.com/robots.txt)])
-        # 根据这个结果 我们可以对url进行分类 这种情况只能暴力crawl
-        end = time.time()
-        put_text('Parsing is complete! time consuming: %.4fs' %
-                    (end - start))        
-    else:
-        start = time.time()
-
-        urls = []
-        urllocs=[]
-        filename = formatdomain(url)
-        domain = filename
-        data = supabase_db.table("shops").select(
-            'urls').eq("domain", domain).execute()
-        print(type(data))
-        # print('existing db',len(supabase_db.table("tiktoka_douyin_users").select('uid').execute()[0]),data,data[0])
-        if len(data.data) > 0:
-            print('this domain data exist', domain, data.data)
-            urls = data.data
-        else:
-            print('this domain data dont exist', domain, data.data)
-
-            with use_scope('log'):
-
-                with battery.redirect_stdout():
-                    url=''
-                    if does_url_exist('https://'+domain+'/robots.txt'):
-                        url='https://'+domain+'/robots.txt'
-                    elif does_url_exist('https://'+domain+'/sitemap.xml'):
-                        # print('--',index)
-                        url='https://'+domain+'/sitemap.xml'
-                    else:
-                        print('there is no sitemap for this domain')
-                    if not url=='':
-                        index = adv.sitemap_to_df(
-                            url, recursive=False)
-                        index=index['loc'].tolist()
-                        index.to_json(filename+'-adv-sitemap.jl')
-                        sitemapurls = []
-                        if len(index) == 0:
-                            print('there is no url found ')
-                        else:
-                            for url in index:
-                                # data = supabase.table("shop_sitemaps").insert({"name":"Germany"}).execute()
-
-                                locs = adv.sitemap_to_df(url)['loc'].tolist()
-                                urlloc = {"sitemap": url,
-                                        "loc": locs}
-                                urllocs.append(urlloc)
-
-
-                        supabaseop(
-                            'shop', {"domain": domain, 'subdomains': urllocs, "sitemapurls": sitemapurls})
-
-            clear('log')
-
-            # urls = list(urls)
-            # print(urls)
-            if len(urllocs) < 1:
-                put_text('there is no url found in this domain', urllocs)
-                put_text('report us through email: whs860603@gmail.com')
-
-                put_button("Try another", onclick=lambda: run_js(
-                    return_home), color='success', outline=True)
             else:
 
-                urlloc = urllocs[0]['urls']
-                # locs = []
-                for idx, item in enumerate(urlloc):
-                    urls.extend(item['loc'])
-        end = time.time()
-        put_text('Parsing is complete! time consuming: %.4fs' %
-                    (end - start))
+                put_row([
+                    put_button("Try another option", onclick=lambda: run_js(
+                        return_home), color='success', outline=True),
+                    put_button("Back to Top", onclick=lambda: run_js(
+                        scroll_to('ROOT', position='top')), color='success', outline=True)
 
-    for idx, item in enumerate(urls):
-        t = []
-        t.append(idx)
-        t.append(item)
-        t.append(url)
-        # print('======',t)
-        if 'collection' in item:
-            # print('collection')
-            data_collection.append(t)
-        elif 'blog' in item:
-            # print('blog')
+                ])
+# home = asgi_app(index)
+# app.mount("/", home)
+app.mount("/", FastAPI(routes=webio_routes(index)))
+# app.mount("/t/", asgi_app(t))
 
-            data_blog.append(t)
-        elif 'product' in item:
-            # print('product')
-
-            data_product.append(t)
-        elif 'pages' in item:
-            data_pages.append(t)
-        data.append(t)
-
-    # put_logbox('log',200)
-    if len(data) > 0:
-        encoded = ''
-        for i in data:
-            encoded = encoded+','.join(str(i))
-            encoded = encoded+'\n'
-        array=encoded.encode('utf-8')
-        clear('loading')
-        clear('log')
-
-        put_collapse('total results: '+str(len(data))+', preview  max 500', put_table(
-            data[:500], header=['id', 'url', 'domain']))
-        put_collapse('preview collection', put_table(
-            data_collection, header=['id', 'url', 'domain']))
-        put_collapse('preview product', put_table(
-            data_product, header=['id', 'url', 'domain']))
-        put_collapse('preview pages', put_table(
-            data_pages, header=['id', 'url', 'domain']))
-        put_collapse('preview blog', put_table(
-            data_blog, header=['id', 'url', 'domain']))
-        put_row([
-            put_button("Try again", onclick=lambda: run_js(
-                return_home), color='success', outline=True),
-            put_button("Back to Top", onclick=lambda: run_js(
-                scroll_to('ROOT', position='top')), color='success', outline=True),
-            put_file(urlparse(url).netloc+'.txt',
-                     array, 'download all')
-        ])
-
-
-home = asgi_app(index)
-
-app.mount("/", home)
-
+# app.mount("/feedback/", FastAPI(routes=webio_routes(feedback)))
+# app.mount("/privacy/", FastAPI(routes=webio_routes(privacy)))
+# # app.mount("/terms", FastAPI(routes=webio_routes(terms)))
+# termsapp = asgi_app(terms)
+# app.mount("/terms/", termsapp)
 
 # api.mount('/static', StaticFiles(directory='static'), name='static')
 # api.include_router(home.router)

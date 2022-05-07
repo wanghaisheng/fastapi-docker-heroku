@@ -545,14 +545,26 @@ PRODUCT_HUNT_FEATURED_BANNER = r"""
 """
 
 LANDING_PAGE_SUBHEADING = r"""
-<h3 align="center">ShopConan™ shopify store watch toolkit</h1>
+<h3 align="center">ShopConan™ shopify Link Detect</h1>
 <p align="center">
     <img alt="Cheers" class="img" width="50%" height="50%" src="https://media.giphy.com/media/DGWAx8d3IkICs/giphy.gif">
 </p>
 """
 
 LANDING_PAGE_DESCRIPTION_English = r"""
-# What is ShopConan™?
+# What is ShopConan™ Link Detect?
+Newbies always want to know the magic of monthly thousands of dollars those smart brand owner makes,it always live in the store design.We here provide you a tool,
+so you can Learn from Top selling brand stores on how to design your collection name,blog title,page setting up.
+
+
+💯 support shopify,wordpress etc
+💯 support product,collection,blog,pages preview
+💯 support full results download,max 1,000,000+
+
+
+
+
+# What is ShopConan™ toolkit?
 As part of shopify store watch toolkit,This  shopify store link detect project aims to detect all links in a shopify store and then monitor them daily,if there is any changes we can notify through wechat .
 
 🔎 A free **brand watch tool** for influencers.
@@ -571,4 +583,17 @@ As part of shopify store watch toolkit,This  shopify store link detect project a
 
 🥳 Short answer: Yes.
 🙌 Long answer: _Yessssssssssss_.
+"""
+
+# Footer
+# ^^^^^^
+FOOTER = f"""
+$('FOOTER').html('✉️ <a href="mailto:shopconanofficial@gmail.com" target="_blank">Contact</a> | 💡 <a href="/feedback">Feedback</a> | 📃 <a href="/terms">Terms of Use</a> | 🔏 <a href="/privacy">Privacy Policy</a> | <a href="https://store-catalog.shopconna.com/" >  shopconna store Archive  </a> | <a href="https://blog.shopconna.com/" >  ShopConan Blog  </a>')
+"""
+
+
+GA_JS_CODE=f"""
+"""
+
+GA_JS_FILE=f"""
 """

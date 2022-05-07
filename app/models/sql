@@ -24,7 +24,7 @@ create table shop_sitemaps (
   shopid bigint,
   loc text,
   lastmod text,
-  sitemap text,
+  sitemapindexurl text,
   etag text,
   sitemap_last_modified text,
   sitemap_size_mb text,
