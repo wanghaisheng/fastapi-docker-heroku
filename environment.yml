@@ -5,8 +5,8 @@ channels:
 dependencies:
   - python=3.7.9
   - pip
-  - wxpython=4.1.1
-  - six=1.16.0
+  - wxpython=4.0.4
+  - six=1.15.0
   - pip:
     - pyinstaller==5.0.1
     - --editable .
