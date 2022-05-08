@@ -4,7 +4,6 @@ from pywebio.utils import pyinstaller_datas
 import platform
 block_cipher = None
 datas = pyinstaller_datas()
-
 if platform.system() == 'Windows':
 
     a = Analysis(['./main.py'],
@@ -36,7 +35,7 @@ hiddenimports=['sqlalchemy.sql.default_comparator'],
               upx_exclude=[],
               runtime_tmpdir=None,
               console=False,
-              icon='./icons/spy_128.ico'
+              icon='icons/spy_128.ico'
               )
 
 elif platform.system() == 'Linux':

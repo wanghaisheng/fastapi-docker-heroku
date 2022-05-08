@@ -8,5 +8,5 @@ pyinstaller -F -w \
 --hidden-import='email.mime.audio' \
 --hidden-import='sqlalchemy.sql.default_comparator' \
 --hidden-import='jinja2' \
---datas='pyinstaller_datas()'
+--icon='./icons/spy_128.ico' \
 main.py
