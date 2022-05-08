@@ -8,5 +8,5 @@ dependencies:
   - wxpython=4.0.4
   - six=1.15.0
   - pip:
-    - pyinstaller==3.6
+    - pyinstaller==5.0.1
     - --editable .
