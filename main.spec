@@ -36,7 +36,8 @@ hiddenimports=['sqlalchemy.sql.default_comparator'],
               upx_exclude=[],
               runtime_tmpdir=None,
               console=False,
-              icon='./icon.ico')
+              icon='icon.ico'
+              )
 
 elif platform.system() == 'Linux':
 
