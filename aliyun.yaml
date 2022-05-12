@@ -1,0 +1,51 @@
+edition: 1.0.0
+name: link-detect
+access: default
+
+vars:
+  region: cn-hangzhou
+  memorySize: 2048
+  service:
+    name: link-detect
+    description: 'https://github.com/wanghaisheng/link-detec-shopconan'
+
+services:
+  framework:
+    component: fc
+    props:
+      region: ${vars.region}
+      service:
+        name: ${vars.service.name}
+        description: ${vars.service.description}
+        internetAccess: true
+        role:
+          name: paddleocrrole
+          policies:
+            - AliyunContainerRegistryReadOnlyAccess
+      function:
+        name: link-detect
+        description: ${vars.service.description}
+        runtime: custom-container
+        memorySize: ${vars.memorySize}
+        caPort: 9000
+        codeUri: ./
+        timeout: 60
+        customContainerConfig:
+          image: registry-vpc.${vars.region}.aliyuncs.com/shopconan/link-detect:latest
+          command: '["python","main.py"]'
+        environmentVariables:
+          testEnv: true
+      triggers:
+        - name: httpTrigger
+          type: http
+          config:
+            authType: anonymous
+            methods:
+              - GET
+              - POST
+              - PUT
+      customDomains:
+        - domainName: auto
+          protocol: HTTP
+          routeConfigs:
+            - path: /*
